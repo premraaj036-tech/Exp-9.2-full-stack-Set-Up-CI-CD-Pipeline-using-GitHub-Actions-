@@ -1,0 +1,91 @@
+.github/workflows/main.yml
+==========================
+
+yaml
+name: CI/CD Pipeline
+on:
+push:
+branches: [ main ]
+jobs:
+test:
+runs-on: ubuntu-latest
+steps:
+- uses: actions/checkout@v3
+- uses: actions/setup-node@v3
+with:
+node-version: 18
+- run: npm ci
+- run: npm test
+build:
+runs-on: ubuntu-latest
+needs: test
+steps:
+- uses: actions/checkout@v3
+- uses: actions/setup-node@v3
+with:
+node-version: 18
+- run: npm ci
+- run: npm run build
+- uses: actions/upload-artifact@v3
+with:
+name: build
+path: build
+deploy:
+runs-on: ubuntu-latest
+needs: build
+if: github.ref == 'refs/heads/main'
+steps:
+- uses: actions/download-artifact@v3
+with:
+name: build
+- uses: peaceiris/actions-gh-pages@v3
+with:
+github_token: ${{ secrets.GITHUB_TOKEN }}
+publish_dir: ./build
+
+
+package.json
+json
+============
+
+{
+"name": "react-app",
+"scripts": {
+"start": "react-scripts start",
+"build": "react-scripts build",
+"test": "react-scripts test --watchAll=false"
+},
+"dependencies": {
+"react": "^18.2.0",
+"react-dom": "^18.2.0",
+"react-scripts": "5.0.1"
+}
+}
+
+
+src/App.js
+jsx
+===========
+
+import React from 'react';
+function App() {
+return (
+<div>
+<h1>CI/CD React App</h1>
+<p>Automated deployment with GitHub Actions</p>
+</div>
+);
+}
+export default App;
+
+
+src/App.test.js
+jsx
+================
+
+import { render, screen } from '@testing-library/react';
+import App from './App';
+test('renders app', () => {
+render(<App />);
+expect(screen.getByText(/CI\/CD React App/i)).toBeInTheDocument();
+});
